@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import struct
 import os
 from ...common.json_layer import json
 from ..internal.Addon import Addon
@@ -9,7 +9,7 @@ from ...common.json_layer import json
 class UlozToCaptcha(Addon):
     __name__ = "UlozToCaptcha"
     __type__ = "hook"
-    __version__ = "0.2"
+    __version__ = "0.3"
     __status__ = "testing"
 
     __config__ = [("activated", "bool", "Activated", True),
@@ -29,13 +29,7 @@ class UlozToCaptcha(Addon):
         task.data['service'] = self.classname
         task.setWaiting(2300)
                
-        mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        mySocket.connect((self.config.get('host'), self.config.get('port')))
-
-        mySocket.send(json.dumps(task.getCaptcha()).encode())
-        data = mySocket.recv(1024)
-        mySocket.close()
-        result = data.decode()
+        result = self.send_json(task.getCaptcha())
 
         self.log_info("Captcha result: " + result)
         task.data['captchaResult'] = result
@@ -45,15 +39,19 @@ class UlozToCaptcha(Addon):
         if task.data['service'] == self.classname and "captchaResult" in task.data:
             self.log_info("Wrong captcha: " + task.data['captchaResult']);
             try:
-                mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                mySocket.connect((self.config.get('host'), self.config.get('port')))
                 data = {}
                 data['wrong'] = task.data['captchaResult']
-                mySocket.send(json.dumps([data]).encode())
-                mySocket.close()
+                self.send_json([data])
                 self.log_info("Wrong captcha sent to server: " + task.data['captchaResult']);
             except OSError:
                 pass
-
-
-
+    def send_json(self, obj):
+        mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        mySocket.connect((self.config.get('host'), self.config.get('port')))
+        msg = json.dumps(obj).encode()
+        # Prefix each message with a 4-byte length (network byte order)
+        msg = struct.pack('>I', len(msg)) + msg
+        mySocket.sendall(msg)
+        data = mySocket.recv(1024)
+        mySocket.close()
+        return data.decode()

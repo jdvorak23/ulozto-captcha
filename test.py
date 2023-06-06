@@ -3,6 +3,7 @@ import socket
 import json
 import base64
 import pathlib
+import struct
 
 PORT = 9988
 
@@ -20,11 +21,17 @@ def get_ip():
     finally:
         s.close()
     return IP
+
+def send_msg(sock, msg):
+    # Prefix each message with a 4-byte length (network byte order)
+    msg = struct.pack('>I', len(msg)) + msg
+    sock.sendall(msg)
+
 IP = get_ip()
-print("IP: " + IP + "\nPort: " + PORT)
+print("IP: " + IP + "\nPort: " + str(PORT))
 
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-mySocket.connect(IP, 9988)
+mySocket.connect((IP, PORT))
 
 data = {}
 with open(path + "/images/good.jpg", mode='rb') as file:
@@ -33,8 +40,7 @@ with open(path + "/images/good.jpg", mode='rb') as file:
 data['src'] = base64.encodebytes(img).decode("utf-8")
 
 json_data = json.dumps([data])
-
-mySocket.send(json_data.encode())
-data = mySocket.recv(65536)
+send_msg(mySocket, json_data.encode())
+data = mySocket.recv(1024)
 mySocket.close()
 print(data.decode())

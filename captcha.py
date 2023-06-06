@@ -9,6 +9,7 @@ import json
 from io import BytesIO
 import re
 import os
+import struct
 
 PORT = 9988
 
@@ -68,8 +69,28 @@ def get_ip():
     finally:
         s.close()
     return IP
+
+def recv_msg(sock):
+    # Read message length and unpack it into an integer
+    raw_msglen = recvall(sock, 4)
+    if not raw_msglen:
+        return None
+    msglen = struct.unpack('>I', raw_msglen)[0]
+    # Read the message data
+    return recvall(sock, msglen)
+
+def recvall(sock, n):
+    # Helper function to recv n bytes or return None if EOF is hit
+    data = bytearray()
+    while len(data) < n:
+        packet = sock.recv(n - len(data))
+        if not packet:
+            return None
+        data.extend(packet)
+    return data
+
 IP = get_ip()
-print("IP: " + IP)
+print("IP: " + IP + "\nPort: " + str(PORT))
 
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 mySocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -80,12 +101,7 @@ while True:
     client, addr = mySocket.accept()
     result = ""
     try:
-        data = b''
-        while True:
-            part = client.recv(1024)
-            data += part
-            if len(part) < 1024:
-                break
+        data = recv_msg(client)
         json_data = json.loads(data.decode())
 
         if "src" in json_data[0]:
