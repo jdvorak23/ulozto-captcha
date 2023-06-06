@@ -28,11 +28,9 @@ class UlozToCaptcha(Addon):
         task.handler.append(self)
         task.data['service'] = self.classname
 
-        image = task.captchaParams['file']
-        with open(self.config.get('folder') + "captcha.txt", "w") as text_file:
-            text_file.write(os.getcwd() + "/" + image)
+        env = {'IMAGE_PATH': os.getcwd() + "/" + task.captchaParams['file']}
 
-        proc = subprocess.Popen(self.config.get('python3') + " " + self.config.get('folder') + "captcha.py", shell=True, stdout=subprocess.PIPE)
+        proc = subprocess.Popen(self.config.get('python3') + " " + self.config.get('folder') + "captcha.py", shell=True, stdout=subprocess.PIPE, env=env)
         result = proc.communicate()[0].rstrip()
         task.setWaiting(5000)
         self.log_info("Captcha result: " + result)

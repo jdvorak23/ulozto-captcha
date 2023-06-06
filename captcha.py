@@ -3,14 +3,14 @@ import numpy as np
 from PIL import Image
 import PIL
 import pathlib
+import os
+
+imagePath = os.environ.get("IMAGE_PATH")
 
 path = str(pathlib.Path(__file__).parent.resolve())
 
-infile = open(path + "/captcha.txt", 'r')
-firstLine = infile.readline()
-
 interpreter = tflite.Interpreter(model_path = path + "/model.tflite")
-image = Image.open(firstLine.strip())
+image = Image.open(imagePath)
 img = np.asarray(image)
 img = (img / 255).astype(np.float32)
 
