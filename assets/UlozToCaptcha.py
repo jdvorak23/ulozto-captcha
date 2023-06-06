@@ -32,7 +32,7 @@ class UlozToCaptcha(Addon):
 
         proc = subprocess.Popen(self.config.get('python3') + " " + self.config.get('folder') + "captcha.py", shell=True, stdout=subprocess.PIPE, env=env)
         result = proc.communicate()[0].rstrip()
-        task.setWaiting(5000)
+        task.setWaiting(10000)
         self.log_info("Captcha result: " + result)
         task.data['captchaResult'] = result
         task.setResult(result)
