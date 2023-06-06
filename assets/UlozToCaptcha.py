@@ -27,7 +27,7 @@ class UlozToCaptcha(Addon):
         self.log_info("UlozTo captcha solver - local");
         task.handler.append(self)
         task.data['service'] = self.classname
-        task.setWaiting(100)
+        task.setWaiting(5000)
 
         image = task.captchaParams['file']
         with open(self.config.get('folder') + "captcha.txt", "w") as text_file:
