@@ -6,8 +6,11 @@ import pathlib
 
 path = str(pathlib.Path(__file__).parent.resolve())
 
-interpreter = tflite.Interpreter(model_path=path+"/model.tflite")
-image = Image.open(path+"/captcha.jpg")
+infile = open(path + "/captcha.txt", 'r')
+firstLine = infile.readline()
+
+interpreter = tflite.Interpreter(model_path = path + "/model.tflite")
+image = Image.open(firstLine.strip())
 img = np.asarray(image)
 img = (img / 255).astype(np.float32)
 
@@ -43,13 +46,9 @@ def decode(li):
 
 decoded_label = [decode(x) for x in labels_indices][0]
 
-image.save(path+"/images/" + decoded_label + ".jpg")
+image.save(path + "/images/" + decoded_label + ".jpg")
 
 print(decoded_label)
-
-with open(path+"/result.txt", "w") as text_file:
-    text_file.write(decoded_label)
-
 
 
 

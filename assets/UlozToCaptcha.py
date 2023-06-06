@@ -3,7 +3,6 @@
 import subprocess
 import os
 from ...common.json_layer import json
-from module.network.RequestFactory import getRequest as get_request
 from ..internal.Addon import Addon
 
 
@@ -14,8 +13,7 @@ class UlozToCaptcha(Addon):
     __status__ = "testing"
 
     __config__ = [("activated", "bool", "Activated", True),
-                  ("submitUrl", "string", "Url for solving captcha", "http://ulozto-captcha.xxx/captcha"),
-                  ("wrongCaptchaUrl", "string", "Url to say wrong captcha", "http://ulozto-captcha.xxx/wrong-captcha")]
+                  ("folder", "string", "Directory with captcha resolver", "/root/ulozto-captcha/")]
 
     __description__ = """Solve captcha by tensor"""
     __license__ = "GPLv3"
@@ -25,27 +23,29 @@ class UlozToCaptcha(Addon):
     def captcha_task(self, task):
         if task.captchaParams['plugin'] is not 'UlozTo':
             return False
-        self.log_debug("UlozTo captcha solver");
+        self.log_info("UlozTo captcha solver - local");
         task.handler.append(self)
         task.data['service'] = self.classname
         task.setWaiting(100)
-        res = self.load(
-            self.config.get('submitUrl'), 
-            post=json.dumps(task.getCaptcha())
-            )
-        self.log_debug(res)
-        result = res.strip()
-        self.log_debug("Captcha result: " + result)
+        image = task.captchaParams['file']
+        
+        with open(self.config.get('folder') + "captcha.txt", "w") as text_file:
+            text_file.write(image)
+        
+        proc = subprocess.Popen("python3 " + self.config.get('folder') + "captcha.py", shell=True, stdout=subprocess.PIPE)
+        result = proc.communicate()[0].rstrip()  
+        self.log_info("Captcha result: " + result)
         task.data['captchaResult'] = result
         task.setResult(result)
         
     def captcha_invalid(self, task):
-        self.log_debug("Wrong captcha")
+        self.log_info("Wrong captcha");
         if task.data['service'] == self.classname and "captchaResult" in task.data:
-            res = self.load(
-                self.config.get('wrongCaptchaUrl'), 
-                post=json.dumps([task.data['captchaResult']])
-                )
-            self.log_debug(res)
+            try:
+                file = self.config.get('folder') + "images/" + task.data['captchaResult'] + ".jpg"
+                os.remove(file)
+                self.log_info("Wrong captcha image removed: " + file);
+            except OSError:
+                pass
 
 
