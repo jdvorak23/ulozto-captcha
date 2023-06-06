@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 import tflite_runtime.interpreter as tflite
 import numpy as np
 from PIL import Image
@@ -8,6 +8,9 @@ import base64
 import json
 from io import BytesIO
 import re
+import os
+
+PORT = 9988
 
 path = str(pathlib.Path(__file__).parent.resolve())
 interpreter = tflite.Interpreter(model_path = path + "/model.tflite")
@@ -53,23 +56,49 @@ def solve_captcha(image):
 
     return decoded_label
 
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(0)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('8.8.8.8', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+IP = get_ip()
+print("IP: " + IP)
 
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 mySocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-mySocket.bind(("localhost", 9988))
+mySocket.bind((IP, PORT))
 mySocket.listen(1)
 
 while True:
     client, addr = mySocket.accept()
     result = ""
     try:
-        data = client.recv(65536).decode()
-        json_data = json.loads(data)
-        image_data = re.sub('^data:image/.+;base64,', '', json_data[0]['src'])
-        image = Image.open(BytesIO(base64.b64decode(image_data)))
-        result = solve_captcha(image)
+        data = b''
+        while True:
+            part = client.recv(1024)
+            data += part
+            if len(part) < 1024:
+                break
+        json_data = json.loads(data.decode())
+
+        if "src" in json_data[0]:
+            image_data = re.sub('^data:image/.+;base64,', '', json_data[0]['src'])
+            image = Image.open(BytesIO(base64.b64decode(image_data)))
+            result = solve_captcha(image)
+            print("Captcha resolved: " + result)
+        if "wrong" in json_data[0]:
+            imagePath = path + "/images/" + json_data[0]['wrong'] + ".jpg"
+            os.remove(imagePath)
+            print("Wrong solved captcha image removed: " + json_data[0]['wrong'] + ".jpg");
     except Exception as e:
-        continue
+        print(e)
     finally:
         client.send(result.encode())
         client.close()

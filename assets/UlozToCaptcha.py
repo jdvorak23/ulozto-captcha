@@ -14,7 +14,8 @@ class UlozToCaptcha(Addon):
 
     __config__ = [("activated", "bool", "Activated", True),
                   ("folder", "string", "Directory with captcha resolver", "/root/ulozto-captcha/"),
-                  ("python3", "string", "Exact python3 interpreter which has all dependencies installed", "/root/.pyenv/versions/3.9.16/bin/python")]
+                  ("host", "string", "IP or hostname or localhost", "pyload.xxx"),
+                  ("port", "string", "Port of open socket", "9988")]
 
     __description__ = """Solve captcha by tensor"""
     __license__ = "GPLv3"
@@ -31,10 +32,10 @@ class UlozToCaptcha(Addon):
         task.setWaiting(2300)
                
         mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        mySocket.connect(("localhost", 9988))
+        mySocket.connect((self.config.get('host'), self.config.get('port')))
 
         mySocket.send(json.dumps(task.getCaptcha()).encode())
-        data = mySocket.recv(65536)
+        data = mySocket.recv(1024)
         mySocket.close()
         result = data.decode()
 
@@ -43,12 +44,16 @@ class UlozToCaptcha(Addon):
         task.setResult(result)
 
     def captcha_invalid(self, task):
-        self.log_info("Wrong captcha");
         if task.data['service'] == self.classname and "captchaResult" in task.data:
+            self.log_info("Wrong captcha: " + task.data['captchaResult']);
             try:
-                file = self.config.get('folder') + "images/" + task.data['captchaResult'] + ".jpg"
-                os.remove(file)
-                self.log_info("Wrong captcha image removed: " + file);
+                mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                mySocket.connect((self.config.get('host'), self.config.get('port')))
+                data = {}
+                data['wrong'] = task.data['captchaResult']
+                mySocket.send(json.dumps([data]).encode())
+                mySocket.close()
+                self.log_info("Wrong captcha sent to server: " + task.data['captchaResult']);
             except OSError:
                 pass
 
