@@ -1,8 +1,7 @@
-import subprocess
-
-env = {'IMAGE_PATH': 'images/good.jpg'}
-
-proc = subprocess.Popen("python3 captcha.py", shell=True, stdout=subprocess.PIPE, env=env)
-result = proc.communicate()[0].rstrip()
-
-print(result)
+import socket
+mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+mySocket.connect(("localhost", 9988))
+mySocket.send('/var/www/ulozto-captcha/images/good.jpg'.encode())
+data = mySocket.recv(1024)
+mySocket.close()
+print(data.decode())
