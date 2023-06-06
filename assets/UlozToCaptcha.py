@@ -5,6 +5,8 @@ import os
 from ...common.json_layer import json
 from ..internal.Addon import Addon
 import socket
+from ...common.json_layer import json
+from module.network.RequestFactory import getRequest as get_request
 
 
 class UlozToCaptcha(Addon):
@@ -33,11 +35,12 @@ class UlozToCaptcha(Addon):
                
         mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         mySocket.connect(("localhost", 9988))
-        mySocket.send(imagePath.encode())
-        data = mySocket.recv(1024)
+
+        mySocket.send(json.dumps(task.getCaptcha()).encode())
+        data = mySocket.recv(65536)
         mySocket.close()
         result = data.decode()
-        
+
         task.setWaiting(5000)
         self.log_info("Captcha result: " + result)
         task.data['captchaResult'] = result

@@ -6,13 +6,15 @@ import PIL
 import pathlib
 import os
 import socket
+import base64
+import json
+from io import BytesIO
+import re
 
 path = str(pathlib.Path(__file__).parent.resolve())
 interpreter = tflite.Interpreter(model_path = path + "/model.tflite")
 
-def solve_captcha(imagePath):
-    print(imagePath)
-    image = Image.open(imagePath)
+def solve_captcha(image):
     img = np.asarray(image)
     img = (img / 255).astype(np.float32)
 
@@ -61,7 +63,11 @@ mySocket.listen(1)
 
 while True:
     client, addr = mySocket.accept()
-    data = client.recv(1024)
-    captcha = solve_captcha(data.decode())
+    data = client.recv(65536).decode()
+    json_data = json.loads(data)
+    image_data = re.sub('^data:image/.+;base64,', '', json_data['src'])
+    image = Image.open(BytesIO(base64.b64decode(image_data)))
+
+    captcha = solve_captcha(image)
     client.send(captcha.encode())
     client.close()
