@@ -27,7 +27,6 @@ class UlozToCaptcha(Addon):
         self.log_info("UlozTo captcha solver - local");
         task.handler.append(self)
         task.data['service'] = self.classname
-        task.setWaiting(5000)
 
         image = task.captchaParams['file']
         with open(self.config.get('folder') + "captcha.txt", "w") as text_file:
@@ -35,6 +34,7 @@ class UlozToCaptcha(Addon):
 
         proc = subprocess.Popen(self.config.get('python3') + " " + self.config.get('folder') + "captcha.py", shell=True, stdout=subprocess.PIPE)
         result = proc.communicate()[0].rstrip()
+        task.setWaiting(5000)
         self.log_info("Captcha result: " + result)
         task.data['captchaResult'] = result
         task.setResult(result)
