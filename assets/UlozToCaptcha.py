@@ -13,9 +13,8 @@ class UlozToCaptcha(Addon):
     __status__ = "testing"
 
     __config__ = [("activated", "bool", "Activated", True),
-                  ("folder", "string", "Directory with captcha resolver", "/root/ulozto-captcha/"),
                   ("host", "string", "IP or hostname or localhost", "pyload.xxx"),
-                  ("port", "string", "Port of open socket", "9988")]
+                  ("port", "int", "Port of open socket", 9988)]
 
     __description__ = """Solve captcha by tensor"""
     __license__ = "GPLv3"
@@ -28,7 +27,6 @@ class UlozToCaptcha(Addon):
         self.log_info("UlozTo captcha solver - local");
         task.handler.append(self)
         task.data['service'] = self.classname
-
         task.setWaiting(2300)
                
         mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
