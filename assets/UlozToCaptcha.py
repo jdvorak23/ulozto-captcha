@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import subprocess
 import os
 from ...common.json_layer import json
 from ..internal.Addon import Addon
 import socket
 from ...common.json_layer import json
-from module.network.RequestFactory import getRequest as get_request
-
 
 class UlozToCaptcha(Addon):
     __name__ = "UlozToCaptcha"
@@ -31,7 +28,7 @@ class UlozToCaptcha(Addon):
         task.handler.append(self)
         task.data['service'] = self.classname
 
-        imagePath = os.getcwd() + "/" + task.captchaParams['file']
+        task.setWaiting(2300)
                
         mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         mySocket.connect(("localhost", 9988))
@@ -41,7 +38,6 @@ class UlozToCaptcha(Addon):
         mySocket.close()
         result = data.decode()
 
-        task.setWaiting(5000)
         self.log_info("Captcha result: " + result)
         task.data['captchaResult'] = result
         task.setResult(result)

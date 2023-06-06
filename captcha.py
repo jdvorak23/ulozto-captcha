@@ -2,9 +2,7 @@
 import tflite_runtime.interpreter as tflite
 import numpy as np
 from PIL import Image
-import PIL
 import pathlib
-import os
 import socket
 import base64
 import json
@@ -63,11 +61,15 @@ mySocket.listen(1)
 
 while True:
     client, addr = mySocket.accept()
-    data = client.recv(65536).decode()
-    json_data = json.loads(data)
-    image_data = re.sub('^data:image/.+;base64,', '', json_data['src'])
-    image = Image.open(BytesIO(base64.b64decode(image_data)))
-
-    captcha = solve_captcha(image)
-    client.send(captcha.encode())
-    client.close()
+    result = ""
+    try:
+        data = client.recv(65536).decode()
+        json_data = json.loads(data)
+        image_data = re.sub('^data:image/.+;base64,', '', json_data[0]['src'])
+        image = Image.open(BytesIO(base64.b64decode(image_data)))
+        result = solve_captcha(image)
+    except Exception as e:
+        continue
+    finally:
+        client.send(result.encode())
+        client.close()
