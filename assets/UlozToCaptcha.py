@@ -4,6 +4,7 @@ import subprocess
 import os
 from ...common.json_layer import json
 from ..internal.Addon import Addon
+import socket
 
 
 class UlozToCaptcha(Addon):
@@ -28,11 +29,16 @@ class UlozToCaptcha(Addon):
         task.handler.append(self)
         task.data['service'] = self.classname
 
-        env = {'IMAGE_PATH': os.getcwd() + "/" + task.captchaParams['file']}
-
-        proc = subprocess.Popen(self.config.get('python3') + " " + self.config.get('folder') + "captcha.py", shell=True, stdout=subprocess.PIPE, env=env)
-        result = proc.communicate()[0].rstrip()
-        task.setWaiting(10000)
+        imagePath = os.getcwd() + "/" + task.captchaParams['file']
+               
+        mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        mySocket.connect(("localhost", 9988))
+        mySocket.send(imagePath.encode())
+        data = mySocket.recv(1024)
+        mySocket.close()
+        result = data.decode()
+        
+        task.setWaiting(5000)
         self.log_info("Captcha result: " + result)
         task.data['captchaResult'] = result
         task.setResult(result)
