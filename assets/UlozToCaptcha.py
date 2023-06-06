@@ -33,7 +33,6 @@ class UlozToCaptcha(Addon):
         with open(self.config.get('folder') + "captcha.txt", "w") as text_file:
             text_file.write(os.getcwd() + "/" + image)
 
-        self.log_info(self.config.get('folder') + "captcha.py")
         proc = subprocess.Popen(self.config.get('python3') + " " + self.config.get('folder') + "captcha.py", shell=True, stdout=subprocess.PIPE)
         result = proc.communicate()[0].rstrip()
         self.log_info("Captcha result: " + result)
