@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import struct
-import os
 from ...common.json_layer import json
 from ..internal.Addon import Addon
 import socket
