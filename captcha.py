@@ -12,6 +12,7 @@ import os
 import struct
 
 PORT = 9988
+IP = "localhost"
 
 path = str(pathlib.Path(__file__).parent.resolve())
 interpreter = tflite.Interpreter(model_path = path + "/model.tflite")
@@ -57,19 +58,6 @@ def solve_captcha(image):
 
     return decoded_label
 
-def get_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(0)
-    try:
-        # doesn't even have to be reachable
-        s.connect(('8.8.8.8', 1))
-        IP = s.getsockname()[0]
-    except Exception:
-        IP = '127.0.0.1'
-    finally:
-        s.close()
-    return IP
-
 def recv_msg(sock):
     # Read message length and unpack it into an integer
     raw_msglen = recvall(sock, 4)
@@ -89,7 +77,6 @@ def recvall(sock, n):
         data.extend(packet)
     return data
 
-IP = get_ip()
 print("IP: " + IP + "\nPort: " + str(PORT))
 
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

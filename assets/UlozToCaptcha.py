@@ -12,7 +12,7 @@ class UlozToCaptcha(Addon):
     __status__ = "testing"
 
     __config__ = [("activated", "bool", "Activated", True),
-                  ("host", "string", "IP or hostname or localhost", "pyload.xxx"),
+                  ("host", "string", "IP or hostname or localhost", "localhost"),
                   ("port", "int", "Port of open socket", 9988)]
 
     __description__ = """Solve captcha by tensor"""
